@@ -19,7 +19,7 @@ detach(dt)
 adt <- melt(dt, id = c("Фамилия", "Группа"), measure = c(4:7))
 colnames(adt) <- c("Испытуемый", "Группа", "Замер", "Баллы")
 
-# ANOVA с повторными измерениями
+# ANOVA с повторными измерениями для 4-х замеров
 # Тест на гомогенность групп
 bartlett.test(Баллы ~ Замер + Группа, adt)
 var.test(Баллы ~ Группа, adt)
@@ -43,3 +43,37 @@ print(pairwise.wilcox.test(Баллы, Замер, paired = TRUE))
 detach(adte)
 # Между группами
 print(sapply(dt[,4:7], FUN = function (x) wilcox.test(formula = x ~ dt$Группа, data = dt)))
+
+# Подготовка данных к ANOVA с повторными измерениями
+rdt <- melt(dt, id = c("Фамилия", "Группа"), measure = c(8:9))
+colnames(rdt) <- c("Испытуемый", "Группа", "Замер", "Баллы")
+
+# ANOVA с повторными измерениями для рейтингов
+# Тест на гомогенность групп
+bartlett.test(Баллы ~ Замер + Группа, rdt)
+var.test(Баллы ~ Группа, rdt)
+attach(rdt)
+boxplot(Баллы ~ Замер + Группа)
+aov.out <- aov(Баллы ~ (Группа * Замер) + Error(Испытуемый/(Замер), data = rdt))
+print(summary(aov.out))
+print(model.tables(aov.out, "means"))
+interaction.plot(Замер, Группа, Баллы, type = "b", pch = c(1, 2), ylim = range(Баллы), lwd = 3, col = rainbow(2))
+detach(rdt)
+
+# Множественные сравнения
+# Внутри групп
+rdtk <- rdt[rdt$Группа == "Контрольная",]
+attach(rdtk)
+print(wilcox.test(Баллы ~ Замер, paired = TRUE))
+detach(rdtk)
+rdte <- rdt[rdt$Группа == "Экспериментальня",]
+attach(rdte)
+print(wilcox.test(Баллы ~ Замер, paired = TRUE))
+detach(rdte)
+# Между группами
+print(sapply(dt[,8:9], FUN = function (x) wilcox.test(formula = x ~ dt$Группа, data = dt)))
+
+# Анализ распределения подтверждения разряда
+cdt <- table(dt$Группа, dt$Подтверждение)
+colnames(cdt) <- c("Подтвердили", "Не подтвердили")
+print(chisq.test(cdt))
