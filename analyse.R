@@ -1,38 +1,38 @@
+library(psych)
+library(reshape)
+
 # Импорт данных
 dt <- read.table("data.csv", sep = ";", header = TRUE)
-# Предварительные проверки
 levels(dt$Группа) <- c("Контрольная", "Экспериментальня")
 colnames(dt)[4:7] <- c("Замер.1", "Замер.2", "Замер.3", "Замер.4")
+
+# Предварительные проверки
 attach(dt)
-print(tapply(Замер.1, Группа, summary))
+print(describe.by(Замер.1, Группа))
 boxplot(Замер.1 ~ Группа, data = dt, xlab = "Группы")
 title(main = "Сравнение контрольной и\nэкспериментальной групп\nдо начала исследования")
 var.test(Замер.1 ~ Группа)
 print(wilcox.test(Замер.1 ~ Группа))
 detach(dt)
+
 # Подготовка данных к ANOVA с повторными измерениями
-# adt <- data.frame(dt[2:7])
-# adt <- stack(adt)
-# adt[3] <- rep(dt$Группа, 4)
-# adt[4] <- rep(dt$Фамилия, 4)
-# colnames(adt) <- c("Баллы", "Замер", "Группа", "Испытуемый")
-library(reshape)
 adt <- melt(dt, id = c("Фамилия", "Группа"), measure = c(4:7))
 colnames(adt) <- c("Испытуемый", "Группа", "Замер", "Баллы")
+
 # ANOVA с повторными измерениями
 # Тест на гомогенность групп
 bartlett.test(Баллы ~ Замер + Группа, adt)
 var.test(Баллы ~ Группа, adt)
 attach(adt)
-#tapply(Баллы, list(Группа, Замер), mean)
-#aggregate(dt[4:7], by = list(dt$Группа), FUN = mean)
-#boxplot(Баллы ~ Замер + Группа)
+boxplot(Баллы ~ Замер + Группа)
 aov.out <- aov(Баллы ~ (Группа * Замер) + Error(Испытуемый/(Замер), data = adt))
 print(summary(aov.out))
 print(model.tables(aov.out, "means"))
 interaction.plot(Замер, Группа, Баллы, type = "b", pch = c(1, 2), ylim = range(Баллы), lwd = 3, col = rainbow(2))
 detach(adt)
+
 # Множественные сравнения
+# Внутри групп
 adtk <- adt[adt$Группа == "Контрольная",]
 attach(adtk)
 print(pairwise.wilcox.test(Баллы, Замер, paired = TRUE))
@@ -41,4 +41,5 @@ adte <- adt[adt$Группа == "Экспериментальня",]
 attach(adte)
 print(pairwise.wilcox.test(Баллы, Замер, paired = TRUE))
 detach(adte)
+# Между группами
 print(sapply(dt[,4:7], FUN = function (x) wilcox.test(formula = x ~ dt$Группа, data = dt)))
