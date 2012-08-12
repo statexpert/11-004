@@ -1,5 +1,4 @@
-library(psych)
-library(reshape)
+#library(psych)
 
 # Импорт данных
 dt <- read.table("data.csv", sep = ";", header = TRUE)
@@ -16,8 +15,8 @@ print(wilcox.test(Замер.1 ~ Группа))
 detach(dt)
 
 # Подготовка данных к ANOVA с повторными измерениями
-adt <- melt(dt, id = c("Фамилия", "Группа"), measure = c(4:7))
-colnames(adt) <- c("Испытуемый", "Группа", "Замер", "Баллы")
+adt <- reshape(data=dt[2:7], idvar="Фамилия", varying=list(3:6), v.names="Баллы", direction="long")
+colnames(adt)[c(1, 3)] <- c("Испытуемый", "Замер")
 
 # ANOVA с повторными измерениями для 4-х замеров
 # Тест на гомогенность групп
@@ -45,8 +44,8 @@ detach(adte)
 print(sapply(dt[,4:7], FUN = function (x) wilcox.test(formula = x ~ dt$Группа, data = dt)))
 
 # Подготовка данных к ANOVA с повторными измерениями
-rdt <- melt(dt, id = c("Фамилия", "Группа"), measure = c(8:9))
-colnames(rdt) <- c("Испытуемый", "Группа", "Замер", "Баллы")
+rdt <- reshape(data=dt[c(2,3,8,9)], idvar="Фамилия", varying=list(3:4), v.names="Баллы", direction="long")
+colnames(rdt)[c(1, 3)] <- c("Испытуемый", "Замер")
 
 # ANOVA с повторными измерениями для рейтингов
 # Тест на гомогенность групп
