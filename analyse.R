@@ -1,3 +1,5 @@
+library(psych)
+
 # Импорт данных
 dt <- read.table("data.csv", sep = ";", header = TRUE)
 levels(dt$Группа) <- c("Контрольная", "Экспериментальня")
